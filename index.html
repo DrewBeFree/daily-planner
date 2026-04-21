@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Planner</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <nav class="tabs">
+    <button id="tasks-tab" class="tab active" onclick="showTab('tasks')">Tasks</button>
+    <button id="groceries-tab" class="tab" onclick="showTab('groceries')">Groceries</button>
+  </nav>
+
+  <main>
+
+    <!-- ── Tasks ── -->
+    <section id="tasks-section">
+      <div class="input-row">
+        <input id="task-input" type="text" placeholder="Add a task…"
+               onkeydown="if(event.key==='Enter') addTask()">
+        <button onclick="addTask()">Add</button>
+      </div>
+      <ul id="task-list"></ul>
+    </section>
+
+    <!-- ── Groceries ── -->
+    <section id="groceries-section" class="hidden">
+
+      <div id="new-list-prompt">
+        <p>Start a new grocery list</p>
+        <div class="input-row">
+          <input id="new-list-title" type="text" placeholder="List name…"
+                 onkeydown="if(event.key==='Enter') createList()">
+          <button onclick="createList()">Create</button>
+        </div>
+      </div>
+
+      <div id="active-list" class="hidden">
+        <div class="list-header">
+          <h2 id="list-title"></h2>
+          <button class="secondary-btn" onclick="archiveList()">Archive List</button>
+        </div>
+        <div class="input-row">
+          <input id="item-input" type="text" placeholder="Add item…"
+                 onkeydown="if(event.key==='Enter') addItem()">
+          <button onclick="addItem()">Add</button>
+        </div>
+        <ul id="item-list"></ul>
+      </div>
+
+      <details class="archives">
+        <summary>Archived Lists</summary>
+        <div id="archived-lists"></div>
+      </details>
+
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
