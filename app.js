@@ -67,6 +67,101 @@ async function deleteTask(id) {
   loadTasks();
 }
 
+// ── Groceries ─────────────────────────────────────────────────────────────
+
+let activeListId = null;
+
+async function loadGroceries() {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .select('*')
+    .is('archived_at', null)
+    .limit(1);
+  if (error) { console.error('loadGroceries:', error); return; }
+
+  if (data && data.length > 0) {
+    activeListId = data[0].id;
+    showActiveList(data[0]);
+    await loadItems(data[0].id);
+  } else {
+    showNewListPrompt();
+  }
+  await loadArchivedLists();
+}
+
+function showActiveList(list) {
+  document.getElementById('new-list-prompt').classList.add('hidden');
+  document.getElementById('active-list').classList.remove('hidden');
+  document.getElementById('list-title').textContent = list.title;
+}
+
+function showNewListPrompt() {
+  activeListId = null;
+  document.getElementById('active-list').classList.add('hidden');
+  document.getElementById('new-list-prompt').classList.remove('hidden');
+  document.getElementById('item-list').innerHTML = '';
+}
+
+async function createList() {
+  const input = document.getElementById('new-list-title');
+  const title = input.value.trim();
+  if (!title) return;
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .insert({ title })
+    .select()
+    .single();
+  if (error) { console.error('createList:', error); return; }
+  input.value = '';
+  activeListId = data.id;
+  showActiveList(data);
+  await loadItems(data.id);
+}
+
+async function loadItems(listId) {
+  const { data, error } = await supabase
+    .from('grocery_items')
+    .select('*')
+    .eq('list_id', listId)
+    .eq('removed', false)
+    .order('created_at');
+  if (error) { console.error('loadItems:', error); return; }
+  renderItems(data || []);
+}
+
+function renderItems(items) {
+  document.getElementById('item-list').innerHTML = items.map(item => `
+    <li data-id="${item.id}">
+      <span>${escapeHtml(item.text)}</span>
+      <button class="delete-btn" onclick="removeItem('${item.id}')" title="Remove">×</button>
+    </li>
+  `).join('');
+}
+
+async function addItem() {
+  if (!activeListId) return;
+  const input = document.getElementById('item-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const { error } = await supabase
+    .from('grocery_items')
+    .insert({ list_id: activeListId, text });
+  if (error) { console.error('addItem:', error); return; }
+  input.value = '';
+  await loadItems(activeListId);
+}
+
+async function removeItem(id) {
+  const { error } = await supabase
+    .from('grocery_items')
+    .update({ removed: true })
+    .eq('id', id);
+  if (error) { console.error('removeItem:', error); return; }
+  await loadItems(activeListId);
+}
+
+async function loadArchivedLists() { /* implemented in Task 8 */ }
+
 // ── Auto-print ─────────────────────────────────────────────────────────────
 
 function checkAutoPrint() {
@@ -80,6 +175,7 @@ function checkAutoPrint() {
 async function init() {
   checkAutoPrint();
   await loadTasks();
+  await loadGroceries();
 }
 
 document.addEventListener('DOMContentLoaded', init);
