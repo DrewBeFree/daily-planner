@@ -1,4 +1,4 @@
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const db = window.db.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 
@@ -26,7 +26,7 @@ function formatDate(iso) {
 // ── Tasks ──────────────────────────────────────────────────────────────────
 
 async function loadTasks() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('tasks')
     .select('*')
     .order('created_at');
@@ -49,20 +49,20 @@ async function addTask() {
   const input = document.getElementById('task-input');
   const text = input.value.trim();
   if (!text) return;
-  const { error } = await supabase.from('tasks').insert({ text });
+  const { error } = await db.from('tasks').insert({ text });
   if (error) { console.error('addTask:', error); return; }
   input.value = '';
   loadTasks();
 }
 
 async function toggleTask(id, completed) {
-  const { error } = await supabase.from('tasks').update({ completed }).eq('id', id);
+  const { error } = await db.from('tasks').update({ completed }).eq('id', id);
   if (error) { console.error('toggleTask:', error); return; }
   loadTasks();
 }
 
 async function deleteTask(id) {
-  const { error } = await supabase.from('tasks').delete().eq('id', id);
+  const { error } = await db.from('tasks').delete().eq('id', id);
   if (error) { console.error('deleteTask:', error); return; }
   loadTasks();
 }
@@ -72,7 +72,7 @@ async function deleteTask(id) {
 let activeListId = null;
 
 async function loadGroceries() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('grocery_lists')
     .select('*')
     .is('archived_at', null)
@@ -106,7 +106,7 @@ async function createList() {
   const input = document.getElementById('new-list-title');
   const title = input.value.trim();
   if (!title) return;
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('grocery_lists')
     .insert({ title })
     .select()
@@ -119,7 +119,7 @@ async function createList() {
 }
 
 async function loadItems(listId) {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('grocery_items')
     .select('*')
     .eq('list_id', listId)
@@ -143,7 +143,7 @@ async function addItem() {
   const input = document.getElementById('item-input');
   const text = input.value.trim();
   if (!text) return;
-  const { error } = await supabase
+  const { error } = await db
     .from('grocery_items')
     .insert({ list_id: activeListId, text });
   if (error) { console.error('addItem:', error); return; }
@@ -152,7 +152,7 @@ async function addItem() {
 }
 
 async function removeItem(id) {
-  const { error } = await supabase
+  const { error } = await db
     .from('grocery_items')
     .update({ removed: true })
     .eq('id', id);
@@ -162,7 +162,7 @@ async function removeItem(id) {
 
 async function archiveList() {
   if (!activeListId) return;
-  const { error } = await supabase
+  const { error } = await db
     .from('grocery_lists')
     .update({ archived_at: new Date().toISOString() })
     .eq('id', activeListId);
@@ -172,7 +172,7 @@ async function archiveList() {
 }
 
 async function loadArchivedLists() {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('grocery_lists')
     .select('*')
     .not('archived_at', 'is', null)
@@ -201,14 +201,14 @@ function renderArchivedLists(lists) {
 }
 
 async function reloadList(listId, title) {
-  const { data: items, error: itemsError } = await supabase
+  const { data: items, error: itemsError } = await db
     .from('grocery_items')
     .select('text')
     .eq('list_id', listId)
     .eq('removed', false);
   if (itemsError) { console.error('reloadList items:', itemsError); return; }
 
-  const { data: newList, error: listError } = await supabase
+  const { data: newList, error: listError } = await db
     .from('grocery_lists')
     .insert({ title })
     .select()
@@ -216,7 +216,7 @@ async function reloadList(listId, title) {
   if (listError) { console.error('reloadList insert:', listError); return; }
 
   if (items && items.length > 0) {
-    const { error: copyError } = await supabase
+    const { error: copyError } = await db
       .from('grocery_items')
       .insert(items.map(item => ({ list_id: newList.id, text: item.text })));
     if (copyError) { console.error('reloadList copy:', copyError); return; }
