@@ -1,2 +1,2 @@
 @echo off
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "https://drewbefree.github.io/daily-planner/?print=1"
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "https://tasks.drewbefree.com/?print=1"
