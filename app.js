@@ -160,7 +160,73 @@ async function removeItem(id) {
   await loadItems(activeListId);
 }
 
-async function loadArchivedLists() { /* implemented in Task 8 */ }
+async function archiveList() {
+  if (!activeListId) return;
+  const { error } = await supabase
+    .from('grocery_lists')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', activeListId);
+  if (error) { console.error('archiveList:', error); return; }
+  showNewListPrompt();
+  await loadArchivedLists();
+}
+
+async function loadArchivedLists() {
+  const { data, error } = await supabase
+    .from('grocery_lists')
+    .select('*')
+    .not('archived_at', 'is', null)
+    .order('archived_at', { ascending: false });
+  if (error) { console.error('loadArchivedLists:', error); return; }
+  renderArchivedLists(data || []);
+}
+
+function renderArchivedLists(lists) {
+  const container = document.getElementById('archived-lists');
+  if (!lists.length) {
+    container.innerHTML = '<p class="empty">No archived lists yet.</p>';
+    return;
+  }
+  container.innerHTML = lists.map(list => `
+    <div class="archived-list">
+      <span class="archive-meta">
+        ${escapeHtml(list.title)}
+        <small>${formatDate(list.archived_at)}</small>
+      </span>
+      <button class="reload-btn" data-list-id="${list.id}"
+              data-title="${escapeHtml(list.title)}"
+              onclick="reloadList('${list.id}', this.dataset.title)">Reload</button>
+    </div>
+  `).join('');
+}
+
+async function reloadList(listId, title) {
+  const { data: items, error: itemsError } = await supabase
+    .from('grocery_items')
+    .select('text')
+    .eq('list_id', listId)
+    .eq('removed', false);
+  if (itemsError) { console.error('reloadList items:', itemsError); return; }
+
+  const { data: newList, error: listError } = await supabase
+    .from('grocery_lists')
+    .insert({ title })
+    .select()
+    .single();
+  if (listError) { console.error('reloadList insert:', listError); return; }
+
+  if (items && items.length > 0) {
+    const { error: copyError } = await supabase
+      .from('grocery_items')
+      .insert(items.map(item => ({ list_id: newList.id, text: item.text })));
+    if (copyError) { console.error('reloadList copy:', copyError); return; }
+  }
+
+  activeListId = newList.id;
+  showActiveList(newList);
+  await loadItems(newList.id);
+  await loadArchivedLists();
+}
 
 // ── Auto-print ─────────────────────────────────────────────────────────────
 
