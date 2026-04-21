@@ -1,4 +1,4 @@
-const db = window.db.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let db;
 
 // ── Tab switching ──────────────────────────────────────────────────────────
 
@@ -239,6 +239,7 @@ function checkAutoPrint() {
 // ── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   checkAutoPrint();
   await loadTasks();
   await loadGroceries();
