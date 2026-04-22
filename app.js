@@ -275,12 +275,13 @@ function initDemo() {
     { id: 'i4', list_id: 'g1', text: 'Olive oil', removed: false },
     { id: 'i5', list_id: 'g1', text: 'Apples', removed: false },
   ];
-  const archived = [
+  let archived = [
     { id: 'g2', title: 'Costco Run', archived_at: '2026-04-15T12:00:00Z' },
   ];
+  let activeList = { id: 'g1', title: 'Weekly Shop' };
 
   activeListId = 'g1';
-  showActiveList({ id: 'g1', title: 'Weekly Shop' });
+  showActiveList(activeList);
   renderTasks(tasks);
   renderItems(items.filter(i => !i.removed));
   renderArchivedLists(archived);
@@ -321,6 +322,7 @@ function initDemo() {
   };
 
   window.archiveList = () => {
+    archived.push({ id: activeList.id, title: activeList.title, archived_at: new Date().toISOString() });
     showNewListPrompt();
     renderArchivedLists(archived);
   };
@@ -329,18 +331,18 @@ function initDemo() {
     const input = document.getElementById('new-list-title');
     const title = input.value.trim();
     if (!title) return;
-    const newList = { id: String(Date.now()), title };
+    activeList = { id: String(Date.now()), title };
     input.value = '';
-    activeListId = newList.id;
-    showActiveList(newList);
+    activeListId = activeList.id;
+    showActiveList(activeList);
     renderItems([]);
   };
 
   window.reloadList = (listId, title) => {
-    const newList = { id: String(Date.now()), title };
-    activeListId = newList.id;
-    showActiveList(newList);
-    renderItems([]);
+    activeList = { id: String(Date.now()), title };
+    activeListId = activeList.id;
+    showActiveList(activeList);
+    renderItems(items.filter(i => i.list_id === listId && !i.removed));
   };
 }
 
