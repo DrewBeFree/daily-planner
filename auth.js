@@ -2,6 +2,9 @@
 // [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('yourpassword')))].map(b=>b.toString(16).padStart(2,'0')).join('')
 // Then paste the output as the value below.
 const PASSWORD_HASH = 'REPLACE_WITH_YOUR_HASH';
+if (PASSWORD_HASH === 'REPLACE_WITH_YOUR_HASH') {
+  console.warn('[auth] PASSWORD_HASH is not set — auth gate will never unlock');
+}
 const SESSION_KEY = 'dp_session';
 
 window.authReady = (async () => {
@@ -15,7 +18,7 @@ window.authReady = (async () => {
   if (localStorage.getItem(SESSION_KEY)) return;
 
   // Show gate and wait for unlock
-  await new Promise(resolve => {
+  await new Promise((resolve, reject) => {
     const overlay = document.createElement('div');
     overlay.id = 'auth-overlay';
     overlay.innerHTML = `
@@ -32,19 +35,23 @@ window.authReady = (async () => {
 
     document.getElementById('auth-form').addEventListener('submit', async e => {
       e.preventDefault();
-      const val = document.getElementById('auth-input').value;
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
-      const hash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
+      try {
+        const val = document.getElementById('auth-input').value;
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(val));
+        const hash = [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 
-      if (hash === PASSWORD_HASH) {
-        localStorage.setItem(SESSION_KEY, crypto.randomUUID());
-        overlay.remove();
-        resolve();
-      } else {
-        const input = document.getElementById('auth-input');
-        input.classList.add('shake');
-        input.value = '';
-        setTimeout(() => input.classList.remove('shake'), 500);
+        if (hash === PASSWORD_HASH) {
+          localStorage.setItem(SESSION_KEY, crypto.randomUUID());
+          overlay.remove();
+          resolve();
+        } else {
+          const input = document.getElementById('auth-input');
+          input.classList.add('shake');
+          input.value = '';
+          setTimeout(() => input.classList.remove('shake'), 500);
+        }
+      } catch (err) {
+        reject(err);
       }
     });
   });
