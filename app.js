@@ -357,4 +357,4 @@ async function init() {
   await loadGroceries();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => init().catch(err => console.error('[init]', err)));
