@@ -255,9 +255,100 @@ function checkAutoPrint() {
   }
 }
 
+// ── Demo mode ──────────────────────────────────────────────────────────────
+
+function initDemo() {
+  const badge = document.createElement('div');
+  badge.id = 'demo-badge';
+  badge.textContent = 'Demo';
+  document.body.appendChild(badge);
+
+  let tasks = [
+    { id: '1', text: 'Pick up dry cleaning', completed: false },
+    { id: '2', text: 'Call the dentist', completed: false },
+    { id: '3', text: 'Review budget spreadsheet', completed: true },
+  ];
+  let items = [
+    { id: 'i1', list_id: 'g1', text: 'Eggs', removed: false },
+    { id: 'i2', list_id: 'g1', text: 'Milk', removed: false },
+    { id: 'i3', list_id: 'g1', text: 'Bread', removed: false },
+    { id: 'i4', list_id: 'g1', text: 'Olive oil', removed: false },
+    { id: 'i5', list_id: 'g1', text: 'Apples', removed: false },
+  ];
+  const archived = [
+    { id: 'g2', title: 'Costco Run', archived_at: '2026-04-15T12:00:00Z' },
+  ];
+
+  activeListId = 'g1';
+  showActiveList({ id: 'g1', title: 'Weekly Shop' });
+  renderTasks(tasks);
+  renderItems(items.filter(i => !i.removed));
+  renderArchivedLists(archived);
+
+  window.addTask = () => {
+    const input = document.getElementById('task-input');
+    const text = input.value.trim();
+    if (!text) return;
+    tasks.push({ id: String(Date.now()), text, completed: false });
+    input.value = '';
+    renderTasks(tasks);
+  };
+
+  window.toggleTask = (id, completed) => {
+    const t = tasks.find(t => t.id === id);
+    if (t) t.completed = completed;
+    renderTasks(tasks);
+  };
+
+  window.deleteTask = (id) => {
+    tasks = tasks.filter(t => t.id !== id);
+    renderTasks(tasks);
+  };
+
+  window.addItem = () => {
+    const input = document.getElementById('item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    items.push({ id: String(Date.now()), list_id: activeListId, text, removed: false });
+    input.value = '';
+    renderItems(items.filter(i => i.list_id === activeListId && !i.removed));
+  };
+
+  window.removeItem = (id) => {
+    const item = items.find(i => i.id === id);
+    if (item) item.removed = true;
+    renderItems(items.filter(i => i.list_id === activeListId && !i.removed));
+  };
+
+  window.archiveList = () => {
+    showNewListPrompt();
+    renderArchivedLists(archived);
+  };
+
+  window.createList = () => {
+    const input = document.getElementById('new-list-title');
+    const title = input.value.trim();
+    if (!title) return;
+    const newList = { id: String(Date.now()), title };
+    input.value = '';
+    activeListId = newList.id;
+    showActiveList(newList);
+    renderItems([]);
+  };
+
+  window.reloadList = (listId, title) => {
+    const newList = { id: String(Date.now()), title };
+    activeListId = newList.id;
+    showActiveList(newList);
+    renderItems([]);
+  };
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
+  await window.authReady;
+  if (window.isDemo) { initDemo(); return; }
   db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   checkAutoPrint();
   await loadTasks();

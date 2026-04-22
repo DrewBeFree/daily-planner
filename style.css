@@ -199,6 +199,23 @@ details[open] .archives summary::before { content: '▾ '; }
 .completed-section summary::before { content: '▸ '; }
 details[open].completed-section > summary::before { content: '▾ '; }
 
+/* ── Demo badge ── */
+#demo-badge {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  background: #d97706;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  z-index: 999;
+  pointer-events: none;
+}
+
 /* ── Auth gate ── */
 #auth-overlay {
   position: fixed;
