@@ -1,7 +1,7 @@
 // Run in browser console to generate your hash:
 // [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('yourpassword')))].map(b=>b.toString(16).padStart(2,'0')).join('')
 // Then paste the output as the value below.
-const PASSWORD_HASH = 'REPLACE_WITH_YOUR_HASH';
+const PASSWORD_HASH = '8ad7506daeda6ba387c9a1bc1c68e05b493c7932f62775de3938bf4473e8b96d';
 if (PASSWORD_HASH === 'REPLACE_WITH_YOUR_HASH') {
   console.warn('[auth] PASSWORD_HASH is not set — auth gate will never unlock');
 }
