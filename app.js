@@ -38,7 +38,9 @@ function renderTasks(tasks) {
   const active = tasks.filter(t => !t.completed);
   const done = tasks.filter(t => t.completed);
 
-  document.getElementById('task-list').innerHTML = active.map(t => `
+  document.getElementById('task-list').innerHTML = active.length === 0
+    ? '<li style="padding:10px 4px"><span class="empty">All caught up.</span></li>'
+    : active.map(t => `
     <li data-id="${t.id}">
       <input type="checkbox" onchange="toggleTask('${t.id}', this.checked)">
       <span>${escapeHtml(t.text)}</span>

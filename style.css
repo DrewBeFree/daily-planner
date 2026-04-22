@@ -155,7 +155,6 @@ input[type="checkbox"] {
 
 .archives summary::before { content: '▸ '; }
 details[open] .archives summary::before { content: '▾ '; }
-details[open] > summary::before { content: '▾ '; }
 
 .archived-list {
   display: flex;
