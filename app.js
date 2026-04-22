@@ -151,6 +151,7 @@ async function loadItems(listId) {
 function renderItems(items) {
   document.getElementById('item-list').innerHTML = items.map(item => `
     <li data-id="${item.id}">
+      <input type="checkbox" onchange="this.closest('li').classList.toggle('checked', this.checked)">
       <span>${escapeHtml(item.text)}</span>
       <button class="delete-btn" onclick="removeItem('${item.id}')" title="Remove">×</button>
     </li>

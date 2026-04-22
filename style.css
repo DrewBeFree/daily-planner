@@ -120,6 +120,12 @@ input[type="checkbox"] {
 
 .delete-btn:hover { background: #fee2e2; color: #dc2626; }
 
+/* ── Grocery item checked state ── */
+#item-list li.checked span {
+  text-decoration: line-through;
+  color: #aaa;
+}
+
 /* ── Groceries ── */
 #new-list-prompt p {
   font-size: 15px;
