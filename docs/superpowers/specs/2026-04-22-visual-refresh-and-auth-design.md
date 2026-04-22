@@ -62,7 +62,7 @@ const PASSWORD_HASH = 'REPLACE_WITH_YOUR_HASH';
 
 ### Session Token
 
-A random token (e.g. `crypto.randomUUID()`) is stored in `localStorage` on successful auth. `auth.js` checks for its presence on subsequent loads. No expiry for now. To log out: clear `localStorage`.
+On successful auth, `crypto.randomUUID()` is saved to `localStorage` under the key `dp_session`. On subsequent loads, `auth.js` checks whether `localStorage.getItem('dp_session')` is truthy — if so, skip the gate. No server validation, no expiry. To log out: `localStorage.removeItem('dp_session')` in the browser console (or a logout button can be added later).
 
 ---
 
