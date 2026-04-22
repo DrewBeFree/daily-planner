@@ -199,6 +199,63 @@ details[open] .archives summary::before { content: '▾ '; }
 .completed-section summary::before { content: '▸ '; }
 details[open].completed-section > summary::before { content: '▾ '; }
 
+/* ── Auth gate ── */
+#auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: #fdf8f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.auth-box {
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  padding: 0 24px;
+}
+
+.auth-box h1 {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  color: #1a1a1a;
+}
+
+#auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#auth-input {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  outline: none;
+  text-align: center;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+#auth-input:focus { border-color: #d97706; }
+
+#auth-input.shake {
+  animation: shake 0.4s ease;
+  border-color: #dc2626;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-8px); }
+  40%       { transform: translateX(8px); }
+  60%       { transform: translateX(-6px); }
+  80%       { transform: translateX(6px); }
+}
+
 /* ── Print ── */
 @media print {
   .tabs,
