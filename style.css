@@ -181,13 +181,34 @@ details[open] > summary::before { content: '▾ '; }
 
 .empty { color: #aaa; font-size: 14px; padding: 10px 0; }
 
+/* ── Completed section ── */
+.completed-section {
+  margin-top: 28px;
+  border-top: 1px solid #f0e6d8;
+  padding-top: 12px;
+}
+
+.completed-section summary {
+  font-size: 13px;
+  color: #a78b6f;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px 0 8px;
+  list-style: none;
+}
+
+.completed-section summary::before { content: '▸ '; }
+details[open].completed-section > summary::before { content: '▾ '; }
+
 /* ── Print ── */
 @media print {
   .tabs,
   #groceries-section,
   .input-row,
   .delete-btn,
-  input[type="checkbox"] {
+  input[type="checkbox"],
+  #completed-section,
+  #auth-overlay {
     display: none !important;
   }
 
@@ -196,6 +217,5 @@ details[open] > summary::before { content: '▾ '; }
   body { max-width: 100%; padding: 12px; font-size: 14px; }
 
   ul li { padding: 6px 0; border-bottom: 1px solid #ddd; }
-  ul li.completed { display: none; }
   ul li span { font-size: 14px; }
 }

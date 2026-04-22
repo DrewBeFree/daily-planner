@@ -35,10 +35,27 @@ async function loadTasks() {
 }
 
 function renderTasks(tasks) {
-  document.getElementById('task-list').innerHTML = tasks.map(t => `
-    <li class="${t.completed ? 'completed' : ''}" data-id="${t.id}">
-      <input type="checkbox" ${t.completed ? 'checked' : ''}
-             onchange="toggleTask('${t.id}', this.checked)">
+  const active = tasks.filter(t => !t.completed);
+  const done = tasks.filter(t => t.completed);
+
+  document.getElementById('task-list').innerHTML = active.map(t => `
+    <li data-id="${t.id}">
+      <input type="checkbox" onchange="toggleTask('${t.id}', this.checked)">
+      <span>${escapeHtml(t.text)}</span>
+      <button class="delete-btn" onclick="deleteTask('${t.id}')" title="Remove">×</button>
+    </li>
+  `).join('');
+
+  const section = document.getElementById('completed-section');
+  if (done.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+  section.classList.remove('hidden');
+  document.getElementById('completed-summary').textContent = `Completed (${done.length})`;
+  document.getElementById('completed-list').innerHTML = done.map(t => `
+    <li class="completed" data-id="${t.id}">
+      <input type="checkbox" checked onchange="toggleTask('${t.id}', this.checked)">
       <span>${escapeHtml(t.text)}</span>
       <button class="delete-btn" onclick="deleteTask('${t.id}')" title="Remove">×</button>
     </li>
