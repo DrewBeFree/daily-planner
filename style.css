@@ -73,11 +73,11 @@ button {
 button:hover { background: #92400e; }
 
 .secondary-btn {
-  background: #f0f0f0;
-  color: #444;
+  background: #f5ede3;
+  color: #78350f;
 }
 
-.secondary-btn:hover { background: #e0e0e0; }
+.secondary-btn:hover { background: #ecdcc8; }
 
 /* ── Task list ── */
 ul { list-style: none; }
@@ -140,7 +140,7 @@ input[type="checkbox"] {
 /* ── Archives ── */
 .archives {
   margin-top: 36px;
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid #f0e6d8;
   padding-top: 14px;
 }
 
@@ -162,7 +162,7 @@ details[open] > summary::before { content: '▾ '; }
   align-items: center;
   justify-content: space-between;
   padding: 9px 0;
-  border-bottom: 1px solid #f5f5f5;
+  border-bottom: 1px solid #f5ede3;
   gap: 12px;
 }
 
@@ -172,12 +172,12 @@ details[open] > summary::before { content: '▾ '; }
 .reload-btn {
   font-size: 12px;
   padding: 5px 12px;
-  background: #f0f0f0;
-  color: #444;
+  background: #f5ede3;
+  color: #78350f;
   flex-shrink: 0;
 }
 
-.reload-btn:hover { background: #e0e0e0; }
+.reload-btn:hover { background: #ecdcc8; }
 
 .empty { color: #aaa; font-size: 14px; padding: 10px 0; }
 
