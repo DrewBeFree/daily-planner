@@ -29,6 +29,7 @@ window.authReady = (async () => {
                  autocomplete="current-password" autofocus>
           <button type="submit">Unlock</button>
         </form>
+        <a href="?demo=1" class="demo-link">Test it out for free!</a>
       </div>
     `;
     document.body.appendChild(overlay);

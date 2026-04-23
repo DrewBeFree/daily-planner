@@ -266,6 +266,17 @@ details[open].completed-section > summary::before { content: '▾ '; }
 
 #auth-input:focus { border-color: #d97706; }
 
+.demo-link {
+  display: block;
+  margin-top: 20px;
+  font-size: 14px;
+  color: #d97706;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.demo-link:hover { text-decoration: underline; }
+
 #auth-input.shake {
   animation: shake 0.4s ease;
   border-color: #dc2626;
