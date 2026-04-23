@@ -153,12 +153,18 @@ async function loadItems(listId) {
 
 function renderItems(items) {
   document.getElementById('item-list').innerHTML = items.map(item => `
-    <li data-id="${item.id}">
-      <input type="checkbox" onchange="this.closest('li').classList.toggle('checked', this.checked)">
+    <li data-id="${item.id}" class="${item.checked ? 'checked' : ''}">
+      <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem('${item.id}', this.checked)">
       <span>${escapeHtml(item.text)}</span>
       <button class="delete-btn" onclick="removeItem('${item.id}')" title="Remove">×</button>
     </li>
   `).join('');
+}
+
+async function toggleItem(id, checked) {
+  const { error } = await db.from('grocery_items').update({ checked }).eq('id', id);
+  if (error) { console.error('toggleItem:', error); return; }
+  await loadItems(activeListId);
 }
 
 async function addItem() {
@@ -313,12 +319,18 @@ async function loadTripItems(listId) {
 
 function renderTripItems(items) {
   document.getElementById('trip-item-list').innerHTML = items.map(item => `
-    <li data-id="${item.id}">
-      <input type="checkbox" onchange="this.closest('li').classList.toggle('checked', this.checked)">
+    <li data-id="${item.id}" class="${item.checked ? 'checked' : ''}">
+      <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleTripItem('${item.id}', this.checked)">
       <span>${escapeHtml(item.text)}</span>
       <button class="delete-btn" onclick="removeTripItem('${item.id}')" title="Remove">×</button>
     </li>
   `).join('');
+}
+
+async function toggleTripItem(id, checked) {
+  const { error } = await db.from('trip_items').update({ checked }).eq('id', id);
+  if (error) { console.error('toggleTripItem:', error); return; }
+  await loadTripItems(activeTripListId);
 }
 
 async function addTripItem() {
@@ -493,6 +505,12 @@ function initDemo() {
     renderItems(items.filter(i => i.list_id === activeListId && !i.removed));
   };
 
+  window.toggleItem = (id, checked) => {
+    const item = items.find(i => i.id === id);
+    if (item) item.checked = checked;
+    renderItems(items.filter(i => i.list_id === activeListId && !i.removed));
+  };
+
   window.removeItem = (id) => {
     const item = items.find(i => i.id === id);
     if (item) item.removed = true;
@@ -529,6 +547,12 @@ function initDemo() {
     if (!text) return;
     tripItems.push({ id: String(Date.now()), list_id: activeTripListId, text, removed: false });
     input.value = '';
+    renderTripItems(tripItems.filter(i => i.list_id === activeTripListId && !i.removed));
+  };
+
+  window.toggleTripItem = (id, checked) => {
+    const item = tripItems.find(i => i.id === id);
+    if (item) item.checked = checked;
     renderTripItems(tripItems.filter(i => i.list_id === activeTripListId && !i.removed));
   };
 
