@@ -5,8 +5,10 @@ let db;
 function showTab(tab) {
   document.getElementById('tasks-tab').classList.toggle('active', tab === 'tasks');
   document.getElementById('groceries-tab').classList.toggle('active', tab === 'groceries');
+  document.getElementById('trips-tab').classList.toggle('active', tab === 'trips');
   document.getElementById('tasks-section').classList.toggle('hidden', tab !== 'tasks');
   document.getElementById('groceries-section').classList.toggle('hidden', tab !== 'groceries');
+  document.getElementById('trips-section').classList.toggle('hidden', tab !== 'trips');
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────
@@ -89,6 +91,7 @@ async function deleteTask(id) {
 // ── Groceries ─────────────────────────────────────────────────────────────
 
 let activeListId = null;
+let activeTripListId = null;
 
 async function loadGroceries() {
   const { data, error } = await db
@@ -248,6 +251,166 @@ async function reloadList(listId, title) {
   await loadArchivedLists();
 }
 
+// ── Trips ─────────────────────────────────────────────────────────────────
+
+async function loadTrips() {
+  const { data, error } = await db
+    .from('trip_lists')
+    .select('*')
+    .is('archived_at', null)
+    .limit(1);
+  if (error) { console.error('loadTrips:', error); return; }
+
+  if (data && data.length > 0) {
+    activeTripListId = data[0].id;
+    showActiveTripList(data[0]);
+    await loadTripItems(data[0].id);
+  } else {
+    showNewTripPrompt();
+  }
+  await loadArchivedTripLists();
+}
+
+function showActiveTripList(list) {
+  document.getElementById('new-trip-prompt').classList.add('hidden');
+  document.getElementById('active-trip').classList.remove('hidden');
+  document.getElementById('trip-title').textContent = list.title;
+}
+
+function showNewTripPrompt() {
+  activeTripListId = null;
+  document.getElementById('active-trip').classList.add('hidden');
+  document.getElementById('new-trip-prompt').classList.remove('hidden');
+  document.getElementById('trip-item-list').innerHTML = '';
+}
+
+async function createTripList() {
+  const input = document.getElementById('new-trip-title');
+  const title = input.value.trim();
+  if (!title) return;
+  const { data, error } = await db
+    .from('trip_lists')
+    .insert({ title })
+    .select()
+    .single();
+  if (error) { console.error('createTripList:', error); return; }
+  input.value = '';
+  activeTripListId = data.id;
+  showActiveTripList(data);
+  await loadTripItems(data.id);
+}
+
+async function loadTripItems(listId) {
+  const { data, error } = await db
+    .from('trip_items')
+    .select('*')
+    .eq('list_id', listId)
+    .eq('removed', false)
+    .order('created_at');
+  if (error) { console.error('loadTripItems:', error); return; }
+  renderTripItems(data || []);
+}
+
+function renderTripItems(items) {
+  document.getElementById('trip-item-list').innerHTML = items.map(item => `
+    <li data-id="${item.id}">
+      <input type="checkbox" onchange="this.closest('li').classList.toggle('checked', this.checked)">
+      <span>${escapeHtml(item.text)}</span>
+      <button class="delete-btn" onclick="removeTripItem('${item.id}')" title="Remove">×</button>
+    </li>
+  `).join('');
+}
+
+async function addTripItem() {
+  if (!activeTripListId) return;
+  const input = document.getElementById('trip-item-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const { error } = await db
+    .from('trip_items')
+    .insert({ list_id: activeTripListId, text });
+  if (error) { console.error('addTripItem:', error); return; }
+  input.value = '';
+  await loadTripItems(activeTripListId);
+}
+
+async function removeTripItem(id) {
+  const { error } = await db
+    .from('trip_items')
+    .update({ removed: true })
+    .eq('id', id);
+  if (error) { console.error('removeTripItem:', error); return; }
+  await loadTripItems(activeTripListId);
+}
+
+async function archiveTripList() {
+  if (!activeTripListId) return;
+  const { error } = await db
+    .from('trip_lists')
+    .update({ archived_at: new Date().toISOString() })
+    .eq('id', activeTripListId);
+  if (error) { console.error('archiveTripList:', error); return; }
+  showNewTripPrompt();
+  await loadArchivedTripLists();
+}
+
+async function loadArchivedTripLists() {
+  const { data, error } = await db
+    .from('trip_lists')
+    .select('*')
+    .not('archived_at', 'is', null)
+    .order('archived_at', { ascending: false });
+  if (error) { console.error('loadArchivedTripLists:', error); return; }
+  renderArchivedTripLists(data || []);
+}
+
+function renderArchivedTripLists(lists) {
+  const container = document.getElementById('archived-trips');
+  if (!lists.length) {
+    container.innerHTML = '<p class="empty">No archived trips yet.</p>';
+    return;
+  }
+  container.innerHTML = lists.map(list => `
+    <div class="archived-list">
+      <span class="archive-meta">
+        ${escapeHtml(list.title)}
+        <small>${formatDate(list.archived_at)}</small>
+      </span>
+      <button class="reload-btn" data-list-id="${list.id}"
+              data-title="${escapeHtml(list.title)}"
+              onclick="reloadTripList('${list.id}', this.dataset.title)">Reload</button>
+    </div>
+  `).join('');
+}
+
+async function reloadTripList(listId, title) {
+  const { data: items, error: itemsError } = await db
+    .from('trip_items')
+    .select('text')
+    .eq('list_id', listId)
+    .eq('removed', false);
+  if (itemsError) { console.error('reloadTripList items:', itemsError); return; }
+
+  const { data: newList, error: listError } = await db
+    .from('trip_lists')
+    .insert({ title })
+    .select()
+    .single();
+  if (listError) { console.error('reloadTripList insert:', listError); return; }
+
+  if (items && items.length > 0) {
+    const { error: copyError } = await db
+      .from('trip_items')
+      .insert(items.map(item => ({ list_id: newList.id, text: item.text })));
+    if (copyError) { console.error('reloadTripList copy:', copyError); return; }
+  }
+
+  activeTripListId = newList.id;
+  showActiveTripList(newList);
+  await loadTripItems(newList.id);
+  await loadArchivedTripLists();
+}
+
 // ── Auto-print ─────────────────────────────────────────────────────────────
 
 function checkAutoPrint() {
@@ -281,11 +444,25 @@ function initDemo() {
   ];
   let activeList = { id: 'g1', title: 'Weekly Shop' };
 
+  let tripItems = [
+    { id: 't1', list_id: 'tr1', text: 'Tent', removed: false },
+    { id: 't2', list_id: 'tr1', text: 'Sleeping bag', removed: false },
+    { id: 't3', list_id: 'tr1', text: 'Flashlight', removed: false },
+    { id: 't4', list_id: 'tr1', text: 'Water bottles', removed: false },
+    { id: 't5', list_id: 'tr1', text: 'First aid kit', removed: false },
+  ];
+  let archivedTrips = [];
+  let activeTrip = { id: 'tr1', title: 'Camping Trip' };
+
   activeListId = 'g1';
+  activeTripListId = 'tr1';
   showActiveList(activeList);
+  showActiveTripList(activeTrip);
   renderTasks(tasks);
   renderItems(items.filter(i => !i.removed));
   renderArchivedLists(archived);
+  renderTripItems(tripItems.filter(i => !i.removed));
+  renderArchivedTripLists(archivedTrips);
 
   window.addTask = () => {
     const input = document.getElementById('task-input');
@@ -345,6 +522,45 @@ function initDemo() {
     showActiveList(activeList);
     renderItems(items.filter(i => i.list_id === listId && !i.removed));
   };
+
+  window.addTripItem = () => {
+    const input = document.getElementById('trip-item-input');
+    const text = input.value.trim();
+    if (!text) return;
+    tripItems.push({ id: String(Date.now()), list_id: activeTripListId, text, removed: false });
+    input.value = '';
+    renderTripItems(tripItems.filter(i => i.list_id === activeTripListId && !i.removed));
+  };
+
+  window.removeTripItem = (id) => {
+    const item = tripItems.find(i => i.id === id);
+    if (item) item.removed = true;
+    renderTripItems(tripItems.filter(i => i.list_id === activeTripListId && !i.removed));
+  };
+
+  window.archiveTripList = () => {
+    archivedTrips.push({ id: activeTrip.id, title: activeTrip.title, archived_at: new Date().toISOString() });
+    showNewTripPrompt();
+    renderArchivedTripLists(archivedTrips);
+  };
+
+  window.createTripList = () => {
+    const input = document.getElementById('new-trip-title');
+    const title = input.value.trim();
+    if (!title) return;
+    activeTrip = { id: String(Date.now()), title };
+    input.value = '';
+    activeTripListId = activeTrip.id;
+    showActiveTripList(activeTrip);
+    renderTripItems([]);
+  };
+
+  window.reloadTripList = (listId, title) => {
+    activeTrip = { id: String(Date.now()), title };
+    activeTripListId = activeTrip.id;
+    showActiveTripList(activeTrip);
+    renderTripItems(tripItems.filter(i => i.list_id === listId && !i.removed));
+  };
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
@@ -356,6 +572,7 @@ async function init() {
   checkAutoPrint();
   await loadTasks();
   await loadGroceries();
+  await loadTrips();
 }
 
 document.addEventListener('DOMContentLoaded', () => init().catch(err => console.error('[init]', err)));
